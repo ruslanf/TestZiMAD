@@ -29,6 +29,7 @@ class MainFragment : Fragment(), BackPressedInterface {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.apply {
+            renderFragment(this, Screens.CatsScreen)
             mainBottomNavigationMenu.setOnNavigationItemSelectedListener {
                 when (it.itemId) {
                     R.id.menuTitleCat -> {

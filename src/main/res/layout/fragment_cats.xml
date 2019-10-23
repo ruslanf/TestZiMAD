@@ -5,26 +5,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipeRefreshCats"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewCats"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginStart="@dimen/recycler_view_start_margin"
         android:layout_marginTop="@dimen/recycler_view_top_margin"
         android:layout_marginEnd="@dimen/recycler_view_end_margin"
         android:layout_marginBottom="@dimen/recycler_view_bottom_margin"
-
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewAnimals"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ProgressBar
         android:id="@+id/progressBar"

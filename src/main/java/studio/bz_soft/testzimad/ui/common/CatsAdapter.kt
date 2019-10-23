@@ -10,16 +10,16 @@ import studio.bz_soft.testzimad.data.models.DataList
 import studio.bz_soft.testzimad.root.delegated.AdapterDelegateInterface
 import studio.bz_soft.testzimad.root.delegated.BaseHolder
 
-sealed class AnimalElements {
-    data class AnimalItem(val animal: DataList): AnimalElements()
+sealed class CatsElements {
+    data class CatsItem(val animal: DataList): CatsElements()
 }
 
-class AnimalsItemHolder(v: View, val onClick: (DataList) -> Unit): BaseHolder<AnimalElements>(v) {
+class CatsItemHolder(v: View, val onClick: (DataList) -> Unit): BaseHolder<CatsElements>(v) {
 
-    override fun bindModel(item: AnimalElements) {
+    override fun bindModel(item: CatsElements) {
         super.bindModel(item)
         when (item) {
-            is AnimalElements.AnimalItem -> itemView.apply {
+            is CatsElements.CatsItem -> itemView.apply {
                 Picasso.get()
                     .load(item.animal.url)
                     .into(ivAnimal)
@@ -30,21 +30,21 @@ class AnimalsItemHolder(v: View, val onClick: (DataList) -> Unit): BaseHolder<An
     }
 }
 
-class AnimalsItemDelegate(private val onClick: (DataList) -> Unit): AdapterDelegateInterface<AnimalElements> {
+class CatsItemDelegate(private val onClick: (DataList) -> Unit): AdapterDelegateInterface<CatsElements> {
 
-    override fun isForViewType(items: List<AnimalElements>, position: Int): Boolean {
-        return items[position] is AnimalElements.AnimalItem
+    override fun isForViewType(items: List<CatsElements>, position: Int): Boolean {
+        return items[position] is CatsElements.CatsItem
     }
 
-    override fun createViewHolder(parent: ViewGroup): BaseHolder<AnimalElements> {
-        return AnimalsItemHolder(
+    override fun createViewHolder(parent: ViewGroup): BaseHolder<CatsElements> {
+        return CatsItemHolder(
             LayoutInflater.from(parent.context)
                 .inflate(R.layout.fragment_cell, parent, false),
             onClick
         )
     }
 
-    override fun bindViewHolder(items: List<AnimalElements>, position: Int, holder: BaseHolder<AnimalElements>) {
+    override fun bindViewHolder(items: List<CatsElements>, position: Int, holder: BaseHolder<CatsElements>) {
         holder.bindModel(items[position])
     }
 }

@@ -12,6 +12,8 @@ import org.koin.android.ext.android.get
 import studio.bz_soft.testzimad.R
 import studio.bz_soft.testzimad.data.models.DataList
 import studio.bz_soft.testzimad.root.BackPressedInterface
+import studio.bz_soft.testzimad.root.Constants.KEY_ANIMALS
+import studio.bz_soft.testzimad.root.Constants.KEY_SCREEN
 import studio.bz_soft.testzimad.root.Screens
 import kotlin.coroutines.CoroutineContext
 
@@ -29,8 +31,8 @@ class DetailedFragment: Fragment(), BackPressedInterface, CoroutineScope {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        animals.complete(arguments?.getParcelable("animals") ?: DataList())
-        screen = arguments?.getSerializable("screen") as Screens
+        animals.complete(arguments?.getParcelable(KEY_ANIMALS) ?: DataList())
+        screen = arguments?.getSerializable(KEY_SCREEN) as Screens
     }
 
     override fun onCreateView(
@@ -70,8 +72,8 @@ class DetailedFragment: Fragment(), BackPressedInterface, CoroutineScope {
     companion object {
         fun instance(animals: DataList, screen: Screens): DetailedFragment = DetailedFragment().apply {
             arguments = Bundle().apply {
-                putParcelable("animals", animals)
-                putSerializable("screen", screen)
+                putParcelable(KEY_ANIMALS, animals)
+                putSerializable(KEY_SCREEN, screen)
             }
         }
     }

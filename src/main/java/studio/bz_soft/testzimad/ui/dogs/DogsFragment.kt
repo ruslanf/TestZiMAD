@@ -1,6 +1,7 @@
 package studio.bz_soft.testzimad.ui.dogs
 
 import android.os.Bundle
+import android.os.Handler
 import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
@@ -15,7 +16,8 @@ import org.koin.android.ext.android.inject
 import studio.bz_soft.testzimad.R
 import studio.bz_soft.testzimad.data.models.DataList
 import studio.bz_soft.testzimad.root.BackPressedInterface
-import studio.bz_soft.testzimad.root.Constants
+import studio.bz_soft.testzimad.root.Constants.KEY_RECYCLER_POSITION
+import studio.bz_soft.testzimad.root.Constants.KEY_RECYCLER_STATE
 import studio.bz_soft.testzimad.root.delegated.DelegateAdapter
 import studio.bz_soft.testzimad.ui.common.DogsElements
 import studio.bz_soft.testzimad.ui.common.DogsItemDelegate
@@ -25,14 +27,25 @@ class DogsFragment : Fragment(), BackPressedInterface, CoroutineScope {
 
     private val presenter: DogsPresenter by inject()
 
-    private lateinit var bundleRecyclerView: Bundle
+    private lateinit var bundleRecyclerViewState: Bundle
 
     private val dAdapter = DelegateAdapter(DogsItemDelegate { dogs ->
         presenter.showDogDetailed(dogs)
     })
-    private var dogs: List<DataList> = emptyList()
     private var job = Job()
     override val coroutineContext: CoroutineContext get() = Dispatchers.Main + job
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            val recyclerViewState: Parcelable? = savedInstanceState.getParcelable(KEY_RECYCLER_STATE)
+            val position: Int? = savedInstanceState.getInt(KEY_RECYCLER_POSITION)
+            if (recyclerViewState != null && position != null) {
+                recyclerViewDogs.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerViewDogs.scrollToPosition(position)
+            }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,20 +62,23 @@ class DogsFragment : Fragment(), BackPressedInterface, CoroutineScope {
                 layoutManager = LinearLayoutManager(view.context, RecyclerView.VERTICAL, false)
             }
         }
+        saveState()
     }
 
     override fun onPause() {
         super.onPause()
-        bundleRecyclerView = Bundle()
-        val recyclerViewState = recyclerViewDogs.layoutManager?.onSaveInstanceState()
-        bundleRecyclerView.putParcelable(Constants.KEY_RECYCLER_STATE, recyclerViewState)
+        saveState()
     }
 
     override fun onResume() {
         super.onResume()
-        if (!bundleRecyclerView.isEmpty) {
-            val recyclerViewState = bundleRecyclerView.getParcelable(Constants.KEY_RECYCLER_STATE) as Parcelable
-            recyclerViewDogs.layoutManager?.onRestoreInstanceState(recyclerViewState)
+        bundleRecyclerViewState.apply {
+            Handler().postDelayed(Runnable {
+                val recyclerViewState: Parcelable? = getParcelable(KEY_RECYCLER_STATE)
+                if (recyclerViewState != null) {
+                    recyclerViewDogs.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                }
+            }, 50)
         }
     }
 
@@ -76,13 +92,23 @@ class DogsFragment : Fragment(), BackPressedInterface, CoroutineScope {
         return true
     }
 
+    private fun saveState() {
+        val recyclerViewState = recyclerViewDogs.layoutManager?.onSaveInstanceState()
+        bundleRecyclerViewState = Bundle().apply {
+            putParcelable(KEY_RECYCLER_STATE, recyclerViewState)
+        }
+    }
+
     private fun refreshAdapter() {
+        progressBar.visibility = View.VISIBLE
         launch {
+            var dogs: List<DataList> = emptyList()
             val request = async(Dispatchers.IO) {
                 dogs = presenter.getListOfDogs()
             }
             request.await()
             renderDogs(dogs)
+            progressBar.visibility = if (request.isCompleted) View.GONE else View.VISIBLE
         }
     }
 
