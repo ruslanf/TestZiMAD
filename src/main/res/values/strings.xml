@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Test ZiMAD</string>
+
+    <string name="main_menu_title_cat">Cats</string>
+    <string name="main_menu_title_dog">Dogs</string>
+
+    <string name="toast">Main Fragment</string>
+</resources>

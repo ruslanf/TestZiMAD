@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="recycler_view_top_margin">8dp</dimen>
+    <dimen name="recycler_view_bottom_margin">8dp</dimen>
+    <dimen name="recycler_view_start_margin">8dp</dimen>
+    <dimen name="recycler_view_end_margin">8dp</dimen>
+
+    <dimen name="cell_image_margin">8dp</dimen>
+    <dimen name="cell_title_margin_start">16dp</dimen>
+    <dimen name="cell_title_margin_end">24dp</dimen>
+
+    <dimen name="detailed_margin">16dp</dimen>
+
+    <dimen name="card_margin">4dp</dimen>
+    <dimen name="card_radius">25dp</dimen>
+    <dimen name="card_image_size">100dp</dimen>
+
+    <dimen name="back_button_size">28dp</dimen>
+</resources>
