@@ -1,7 +1,6 @@
 package studio.bz_soft.testzimad.ui.dogs
 
 import android.os.Bundle
-import android.os.Handler
 import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.fragment_dogs.*
+import kotlinx.android.synthetic.main.fragment_dogs.progressBar
 import kotlinx.android.synthetic.main.fragment_dogs.view.*
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
@@ -27,23 +27,19 @@ class DogsFragment : Fragment(), BackPressedInterface, CoroutineScope {
 
     private val presenter: DogsPresenter by inject()
 
-    private lateinit var bundleRecyclerViewState: Bundle
-
     private val dAdapter = DelegateAdapter(DogsItemDelegate { dogs ->
         presenter.showDogDetailed(dogs)
     })
     private var job = Job()
     override val coroutineContext: CoroutineContext get() = Dispatchers.Main + job
+    private var recyclerViewState: Parcelable? = null
+    private var position = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState != null) {
-            val recyclerViewState: Parcelable? = savedInstanceState.getParcelable(KEY_RECYCLER_STATE)
-            val position: Int? = savedInstanceState.getInt(KEY_RECYCLER_POSITION)
-            if (recyclerViewState != null && position != null) {
-                recyclerViewDogs.layoutManager?.onRestoreInstanceState(recyclerViewState)
-                recyclerViewDogs.scrollToPosition(position)
-            }
+        savedInstanceState?.apply {
+            recyclerViewState = getParcelable(KEY_RECYCLER_STATE)
+            position = getInt(KEY_RECYCLER_POSITION)
         }
     }
 
@@ -62,23 +58,16 @@ class DogsFragment : Fragment(), BackPressedInterface, CoroutineScope {
                 layoutManager = LinearLayoutManager(view.context, RecyclerView.VERTICAL, false)
             }
         }
-        saveState()
     }
 
-    override fun onPause() {
-        super.onPause()
-        saveState()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        bundleRecyclerViewState.apply {
-            Handler().postDelayed(Runnable {
-                val recyclerViewState: Parcelable? = getParcelable(KEY_RECYCLER_STATE)
-                if (recyclerViewState != null) {
-                    recyclerViewDogs.layoutManager?.onRestoreInstanceState(recyclerViewState)
-                }
-            }, 50)
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.apply {
+            val recyclerViewState = recyclerViewDogs.layoutManager?.onSaveInstanceState()
+            val position: Int =
+                (recyclerViewDogs.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
+            putParcelable(KEY_RECYCLER_STATE, recyclerViewState)
+            putInt(KEY_RECYCLER_POSITION, position)
         }
     }
 
@@ -90,13 +79,6 @@ class DogsFragment : Fragment(), BackPressedInterface, CoroutineScope {
     override fun onBackPressed(): Boolean {
         presenter.onBackPressed()
         return true
-    }
-
-    private fun saveState() {
-        val recyclerViewState = recyclerViewDogs.layoutManager?.onSaveInstanceState()
-        bundleRecyclerViewState = Bundle().apply {
-            putParcelable(KEY_RECYCLER_STATE, recyclerViewState)
-        }
     }
 
     private fun refreshAdapter() {

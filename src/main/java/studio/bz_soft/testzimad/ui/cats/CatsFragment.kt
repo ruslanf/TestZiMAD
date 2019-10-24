@@ -28,13 +28,24 @@ class CatsFragment : Fragment(), BackPressedInterface, CoroutineScope {
 
     private val presenter: CatsPresenter by inject()
 
-    private lateinit var bundleRecyclerViewState: Bundle
+    private var cats: List<DataList> = emptyList()
 
     private val dAdapter = DelegateAdapter(CatsItemDelegate { cats ->
         presenter.showCatDetailed(cats)
     })
     private var job = Job()
     override val coroutineContext: CoroutineContext get() = Dispatchers.Main + job
+    private var recyclerViewState: Parcelable? = null
+    private var position = 0
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        savedInstanceState?.apply {
+            recyclerViewState = getParcelable(KEY_RECYCLER_STATE)
+            position = getInt(KEY_RECYCLER_POSITION)
+            Log.d("Cats", "onCreate() position is -> $position")
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,56 +55,31 @@ class CatsFragment : Fragment(), BackPressedInterface, CoroutineScope {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        refreshAdapter()
+        Log.d("Cats", "onViewCreated() position is -> $position")
+
         view.apply {
             recyclerViewCats.apply {
                 adapter = dAdapter
                 layoutManager = LinearLayoutManager(view.context, RecyclerView.VERTICAL, false)
+                refreshAdapter()
+//                if (cats.isNotEmpty()) renderCats(cats)
+                recyclerViewState?.apply {
+                    layoutManager?.onRestoreInstanceState(recyclerViewState)
+                    scrollToPosition(position)
+                }
             }
         }
-        saveState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        val recyclerViewState = recyclerViewCats.layoutManager?.onSaveInstanceState()
-        val position: Int = (recyclerViewCats.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
+        super.onSaveInstanceState(outState)
         outState.apply {
+            val recyclerViewState = recyclerViewCats.layoutManager?.onSaveInstanceState()
+            val position: Int =
+                (recyclerViewCats.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
+            Log.d("Cats", "onSaveInstanceState() position is -> $position")
             putParcelable(KEY_RECYCLER_STATE, recyclerViewState)
             putInt(KEY_RECYCLER_POSITION, position)
-        }
-        super.onSaveInstanceState(outState)
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        savedInstanceState.apply {
-            val recyclerViewState: Parcelable? = savedInstanceState?.getParcelable(KEY_RECYCLER_STATE)
-            val position: Int? = savedInstanceState?.getInt(KEY_RECYCLER_POSITION)
-            if (recyclerViewState != null && position != null) {
-                recyclerViewCats.layoutManager?.onRestoreInstanceState(recyclerViewState)
-                recyclerViewCats.scrollToPosition(position)
-            }
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d("Cats", "onPause()...")
-        saveState()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d("Cats", "onResume()...")
-        bundleRecyclerViewState.apply {
-            Handler().postDelayed(Runnable {
-                val recyclerViewState: Parcelable? = getParcelable(KEY_RECYCLER_STATE)
-                val position: Int = getInt(KEY_RECYCLER_POSITION)
-                if (recyclerViewState != null) {
-                    recyclerViewCats.layoutManager?.onRestoreInstanceState(recyclerViewState)
-                    recyclerViewCats.scrollToPosition(position)
-                }
-            }, 50)
         }
     }
 
@@ -107,24 +93,16 @@ class CatsFragment : Fragment(), BackPressedInterface, CoroutineScope {
         return true
     }
 
-    private fun saveState() {
-        val recyclerViewState = recyclerViewCats.layoutManager?.onSaveInstanceState()
-        val position: Int = (recyclerViewCats.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
-        bundleRecyclerViewState = Bundle().apply {
-            putParcelable(KEY_RECYCLER_STATE, recyclerViewState)
-            putInt(KEY_RECYCLER_POSITION, position)
-        }
-    }
-
     private fun refreshAdapter() {
+        Log.d("Cats", "refreshAdapter()...")
         progressBar.visibility = View.VISIBLE
         launch {
-            var cats: List<DataList> = emptyList()
+
             val request = async(Dispatchers.IO) {
                 cats = presenter.getListOfCats()
             }
             request.await()
-            renderCats(cats)
+            if (request.isCompleted) renderCats(cats)
             progressBar.visibility = if (request.isCompleted) View.GONE else View.VISIBLE
         }
     }
