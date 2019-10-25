@@ -18,6 +18,7 @@ import studio.bz_soft.testzimad.data.models.DataList
 import studio.bz_soft.testzimad.root.BackPressedInterface
 import studio.bz_soft.testzimad.root.Constants.KEY_RECYCLER_POSITION
 import studio.bz_soft.testzimad.root.Constants.KEY_RECYCLER_STATE
+import studio.bz_soft.testzimad.root.common.scrollToPosition
 import studio.bz_soft.testzimad.root.delegated.DelegateAdapter
 import studio.bz_soft.testzimad.ui.common.DogsElements
 import studio.bz_soft.testzimad.ui.common.DogsItemDelegate
@@ -27,7 +28,7 @@ class DogsFragment : Fragment(), BackPressedInterface, CoroutineScope {
 
     private val presenter: DogsPresenter by inject()
 
-    private val dAdapter = DelegateAdapter(DogsItemDelegate { dogs ->
+    private val dogsAdapter = DelegateAdapter(DogsItemDelegate { dogs ->
         presenter.showDogDetailed(dogs)
     })
     private var job = Job()
@@ -54,8 +55,12 @@ class DogsFragment : Fragment(), BackPressedInterface, CoroutineScope {
         refreshAdapter()
         view.apply {
             recyclerViewDogs.apply {
-                adapter = dAdapter
+                adapter = dogsAdapter
                 layoutManager = LinearLayoutManager(view.context, RecyclerView.VERTICAL, false)
+                recyclerViewState?.apply {
+                    layoutManager?.onRestoreInstanceState(recyclerViewState)
+                    scrollToPosition(recyclerViewDogs, position)
+                }
             }
         }
     }
@@ -82,7 +87,6 @@ class DogsFragment : Fragment(), BackPressedInterface, CoroutineScope {
     }
 
     private fun refreshAdapter() {
-        progressBar.visibility = View.VISIBLE
         launch {
             var dogs: List<DataList> = emptyList()
             val request = async(Dispatchers.IO) {
@@ -90,12 +94,11 @@ class DogsFragment : Fragment(), BackPressedInterface, CoroutineScope {
             }
             request.await()
             renderDogs(dogs)
-            progressBar.visibility = if (request.isCompleted) View.GONE else View.VISIBLE
         }
     }
 
     private fun renderDogs(dogs: List<DataList>) {
-        dAdapter.apply {
+        dogsAdapter.apply {
             items.clear()
             items.addAll(dogs.map { DogsElements.DogsItem(it) })
             notifyDataSetChanged()

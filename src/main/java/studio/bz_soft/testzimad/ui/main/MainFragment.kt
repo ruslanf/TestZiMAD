@@ -29,7 +29,7 @@ class MainFragment : Fragment(), BackPressedInterface {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.apply {
-            renderFragment(this, Screens.CatsScreen)
+            if (savedInstanceState == null) renderFragment(view, Screens.CatsScreen)
             mainBottomNavigationMenu.setOnNavigationItemSelectedListener {
                 when (it.itemId) {
                     R.id.menuTitleCat -> {
@@ -60,11 +60,7 @@ class MainFragment : Fragment(), BackPressedInterface {
         v.apply {
             childFragmentManager
                 .beginTransaction()
-                .replace(R.id.frameLayoutMain, when (screen) {
-                    is Screens.CatsScreen -> catsFragment
-                    is Screens.DogsScreen -> dogsFragment
-                    else -> catsFragment
-                })
+                .replace(R.id.frameLayoutMain, if (screen is Screens.CatsScreen) catsFragment else dogsFragment)
                 .commit()
         }
     }

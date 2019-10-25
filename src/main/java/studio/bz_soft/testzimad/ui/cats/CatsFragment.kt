@@ -1,9 +1,7 @@
 package studio.bz_soft.testzimad.ui.cats
 
 import android.os.Bundle
-import android.os.Handler
 import android.os.Parcelable
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,6 +17,7 @@ import studio.bz_soft.testzimad.data.models.DataList
 import studio.bz_soft.testzimad.root.BackPressedInterface
 import studio.bz_soft.testzimad.root.Constants.KEY_RECYCLER_POSITION
 import studio.bz_soft.testzimad.root.Constants.KEY_RECYCLER_STATE
+import studio.bz_soft.testzimad.root.common.scrollToPosition
 import studio.bz_soft.testzimad.root.delegated.DelegateAdapter
 import studio.bz_soft.testzimad.ui.common.CatsElements
 import studio.bz_soft.testzimad.ui.common.CatsItemDelegate
@@ -28,9 +27,7 @@ class CatsFragment : Fragment(), BackPressedInterface, CoroutineScope {
 
     private val presenter: CatsPresenter by inject()
 
-    private var cats: List<DataList> = emptyList()
-
-    private val dAdapter = DelegateAdapter(CatsItemDelegate { cats ->
+    private val catsAdapter = DelegateAdapter(CatsItemDelegate { cats ->
         presenter.showCatDetailed(cats)
     })
     private var job = Job()
@@ -43,7 +40,6 @@ class CatsFragment : Fragment(), BackPressedInterface, CoroutineScope {
         savedInstanceState?.apply {
             recyclerViewState = getParcelable(KEY_RECYCLER_STATE)
             position = getInt(KEY_RECYCLER_POSITION)
-            Log.d("Cats", "onCreate() position is -> $position")
         }
     }
 
@@ -55,17 +51,14 @@ class CatsFragment : Fragment(), BackPressedInterface, CoroutineScope {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d("Cats", "onViewCreated() position is -> $position")
-
+        refreshAdapter()
         view.apply {
             recyclerViewCats.apply {
-                adapter = dAdapter
+                adapter = catsAdapter
                 layoutManager = LinearLayoutManager(view.context, RecyclerView.VERTICAL, false)
-                refreshAdapter()
-//                if (cats.isNotEmpty()) renderCats(cats)
                 recyclerViewState?.apply {
                     layoutManager?.onRestoreInstanceState(recyclerViewState)
-                    scrollToPosition(position)
+                    scrollToPosition(recyclerViewCats, position)
                 }
             }
         }
@@ -77,7 +70,6 @@ class CatsFragment : Fragment(), BackPressedInterface, CoroutineScope {
             val recyclerViewState = recyclerViewCats.layoutManager?.onSaveInstanceState()
             val position: Int =
                 (recyclerViewCats.layoutManager as LinearLayoutManager).findFirstCompletelyVisibleItemPosition()
-            Log.d("Cats", "onSaveInstanceState() position is -> $position")
             putParcelable(KEY_RECYCLER_STATE, recyclerViewState)
             putInt(KEY_RECYCLER_POSITION, position)
         }
@@ -94,21 +86,18 @@ class CatsFragment : Fragment(), BackPressedInterface, CoroutineScope {
     }
 
     private fun refreshAdapter() {
-        Log.d("Cats", "refreshAdapter()...")
-        progressBar.visibility = View.VISIBLE
         launch {
-
+            var cats: List<DataList> = emptyList()
             val request = async(Dispatchers.IO) {
                 cats = presenter.getListOfCats()
             }
             request.await()
-            if (request.isCompleted) renderCats(cats)
-            progressBar.visibility = if (request.isCompleted) View.GONE else View.VISIBLE
+            renderCats(cats)
         }
     }
 
     private fun renderCats(cats: List<DataList>) {
-        dAdapter.apply {
+        catsAdapter.apply {
             items.clear()
             items.addAll(cats.map { CatsElements.CatsItem(it) })
             notifyDataSetChanged()
